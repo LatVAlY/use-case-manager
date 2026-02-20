@@ -26,18 +26,20 @@
 
 ## Table of Contents
 
+- [Table of Contents](#table-of-contents)
 - [Features](#features)
 - [Quick Start](#quick-start)
-- [System Architecture](#system-architecture)
-- [Chat Agent Graph (LangGraph)](#chat-agent-graph-langgraph)
-- [Scope Management & Prioritization](#scope-management--prioritization)
   - [Backend (Recommended: Docker)](#backend-recommended-docker)
   - [Backend (Manual / Development)](#backend-manual--development)
   - [Frontend](#frontend)
 - [Screenshots](#screenshots)
 - [Tech Stack](#tech-stack)
-- [Contributing](#contributing)
-- [License](#license)
+- [System Architecture](#system-architecture)
+- [Chat Agent Graph (LangGraph)](#chat-agent-graph-langgraph)
+- [Scope Management \& Prioritization](#scope-management--prioritization)
+  - [Implemented Must-Have Features (Core of the Assignment)](#implemented-must-have-features-core-of-the-assignment)
+  - [Consciously **Not** Implemented Features (Scope Reduction)](#consciously-not-implemented-features-scope-reduction)
+  - [Key Trade-offs \& Technical Decisions](#key-trade-offs--technical-decisions)
 
 ## Features
 
@@ -314,21 +316,3 @@ The assignment is deliberately **broader than what can realistically be achieved
 | Frontend: Next.js + React Server Components| SSR + good SEO, simple state sync with agent                                   | vs plain Vite/React: Slightly more boilerplate, but better UX + data fetching      |
 | Auth: fastapi-users (JWT + DB)             | Proven, quick to implement                                                     | vs NextAuth: Backend-centered auth → simpler RBAC in agent                        |
 | No dedicated graph DB for relations        | Relations stay in Postgres (for MVP)                                           | vs Neo4j: No additional service → simpler deployment                               |
-
-### Conclusion
-
-**Quality over quantity** — I focused on a **stable, locally runnable MVP** that makes all **must-have features** usable and consistently implements the **agent-first** approach. The main emphasis was on:
-
-- Reliable use-case extraction
-- Robust role-based agent control
-- Bidirectional frontend–backend synchronization
-- Good documentation & reproducible setup
-
-This aligns with the evaluation criteria: iterative development, conscious scope decisions, clean architecture, and realistic time management within 5 days.
-
-**Post-MVP development potential:**
-- Full prioritization & roadmap UI
-- Cross-transcript deduplication + networking features
-- Graphical visualization of the use-case landscape
-
-I look forward to your feedback and the discussion in calendar week 9!
