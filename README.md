@@ -116,7 +116,6 @@ Open http://localhost:3000 (Vite default port)
 
 ## Screenshots
 
-<!-- Add more images/GIFs here later -->
 
 <p align="center">
   <img src="backend/docs/product.png" alt="Main Dashboard" width="600" />
