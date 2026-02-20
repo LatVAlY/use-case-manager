@@ -19,9 +19,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/yourusername/usecase-manager/stargazers"><img src="https://img.shields.io/github/stars/yourusername/usecase-manager?style=social" alt="GitHub stars" /></a>
-  <a href="https://github.com/yourusername/usecase-manager/issues"><img src="https://img.shields.io/github/issues/yourusername/usecase-manager?style=flat-square" alt="Issues" /></a>
-  <a href="https://github.com/yourusername/usecase-manager/blob/main/LICENSE"><img src="https://img.shields.io/github/license/yourusername/usecase-manager?style=flat-square" alt="License" /></a>
+  <a href="https://github.com/LatVAlY/use-case-manager/stargazers"><img src="https://img.shields.io/github/stars/yourusername/usecase-manager?style=social" alt="GitHub stars" /></a>
+  <a href="https://github.com/LatVAlY/use-case-manager/issues"><img src="https://img.shields.io/github/issues/yourusername/usecase-manager?style=flat-square" alt="Issues" /></a>
+  <a href="https://github.com/LatVAlY/use-case-manager/blob/main/LICENSE"><img src="https://img.shields.io/github/license/yourusername/usecase-manager?style=flat-square" alt="License" /></a>
 </p>
 
 ## Table of Contents
@@ -53,7 +53,7 @@ One command to rule them all:
 
 ```bash
 # Clone & enter repo
-git clone https://github.com/yourusername/usecase-manager.git
+git clone https://github.com/LatVAlY/use-case-manager.git
 cd usecase-manager
 
 # Copy example env files
