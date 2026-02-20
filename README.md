@@ -112,7 +112,7 @@ yarn dev
 npm run dev
 ```
 
-Open http://localhost:3000 (Vite default port)
+Open http://localhost:3000
 
 ## Screenshots
 
@@ -146,7 +146,7 @@ flowchart TD
     User -->|Swagger /direct| FastAPI
 
     subgraph "Frontend Layer" 
-        Frontend[Frontend<br>React / Vite / TS]:::frontend
+        Frontend[Frontend<br>NEXTJS / TS]:::frontend
     end
 
     %% Core API
