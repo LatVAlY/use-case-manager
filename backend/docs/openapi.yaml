@@ -1,0 +1,6019 @@
+openapi: 3.1.0
+info:
+  title: UseCase Manager
+  description: AI-powered use case extraction from workshop transcripts
+  version: 0.1.0
+paths:
+  /auth/jwt/login:
+    post:
+      tags:
+      - auth
+      summary: Auth:Jwt.Login
+      operationId: auth_jwt_login_auth_jwt_login_post
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                grant_type:
+                  anyOf:
+                  - type: string
+                    pattern: ^password$
+                  - type: "null"
+                  title: Grant Type
+                username:
+                  type: string
+                  title: Username
+                password:
+                  type: string
+                  format: password
+                  title: Password
+                scope:
+                  type: string
+                  title: Scope
+                  default: ""
+                client_id:
+                  anyOf:
+                  - type: string
+                  - type: "null"
+                  title: Client Id
+                client_secret:
+                  anyOf:
+                  - type: string
+                  - type: "null"
+                  format: password
+                  title: Client Secret
+              type: object
+              required:
+              - username
+              - password
+              title: Body_auth_jwt_login_auth_jwt_login_post
+        required: true
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  access_token:
+                    type: string
+                    title: Access Token
+                  token_type:
+                    type: string
+                    title: Token Type
+                  refresh_token:
+                    type: string
+                    title: Refresh Token
+                type: object
+                required:
+                - access_token
+                - token_type
+                - refresh_token
+                title: BearerRefreshResponse
+              example:
+                access_token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiOTIyMWZmYzktNjQwZi00MzcyLTg2ZDMtY2U2NDJjYmE1NjAzIiwiYXVkIjoiZmFzdGFwaS11c2VyczphdXRoIiwiZXhwIjoxNTcxNTA0MTkzfQ.M10bjOe45I5Ncu_uXvOmVV8QxnL-nZfcH96U90JaocI
+                refresh_token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiOTIyMWZmYzktNjQwZi00MzcyLTg2ZDMtY2U2NDJjYmE1NjAzIiwiYXVkIjoiZmFzdGFwaS11c2VyczphdXRoIiwiZXhwIjoxNTcxNTA0MTkzfQ.M10bjOe45I5Ncu_uXvOmVV8QxnL-nZfcH96U90JaocI
+                token_type: bearer
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    anyOf:
+                    - type: string
+                    - additionalProperties:
+                        type: string
+                      type: object
+                    title: Detail
+                type: object
+                required:
+                - detail
+                title: ErrorModel
+              examples:
+                LOGIN_BAD_CREDENTIALS:
+                  summary: Bad credentials or the user is inactive.
+                  value:
+                    detail: LOGIN_BAD_CREDENTIALS
+                LOGIN_USER_NOT_VERIFIED:
+                  summary: The user is not verified.
+                  value:
+                    detail: LOGIN_USER_NOT_VERIFIED
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /auth/jwt/logout:
+    post:
+      tags:
+      - auth
+      summary: Auth:Jwt.Logout
+      operationId: auth_jwt_logout_auth_jwt_logout_post
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        "401":
+          description: Missing token or inactive user.
+      security:
+      - OAuth2PasswordBearer: []
+  /auth/register:
+    post:
+      tags:
+      - auth
+      summary: Register:Register
+      operationId: register_register_auth_register_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                email:
+                  type: string
+                  format: email
+                  title: Email
+                password:
+                  type: string
+                  title: Password
+                is_active:
+                  anyOf:
+                  - type: boolean
+                  - type: "null"
+                  title: Is Active
+                  default: true
+                is_superuser:
+                  anyOf:
+                  - type: boolean
+                  - type: "null"
+                  title: Is Superuser
+                  default: false
+                is_verified:
+                  anyOf:
+                  - type: boolean
+                  - type: "null"
+                  title: Is Verified
+                  default: false
+                full_name:
+                  anyOf:
+                  - type: string
+                  - type: "null"
+                  title: Full Name
+              type: object
+              required:
+              - email
+              - password
+              title: UserCreate
+        required: true
+      responses:
+        "201":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  email:
+                    type: string
+                    title: Email
+                  full_name:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Full Name
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  role:
+                    type: string
+                    enum:
+                    - reader
+                    - maintainer
+                    - admin
+                    title: UserRole
+                  is_active:
+                    type: boolean
+                    title: Is Active
+                  is_verified:
+                    type: boolean
+                    title: Is Verified
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - email
+                - id
+                - role
+                - is_active
+                - is_verified
+                - created_at
+                - updated_at
+                title: UserResponse
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    anyOf:
+                    - type: string
+                    - additionalProperties:
+                        type: string
+                      type: object
+                    title: Detail
+                type: object
+                required:
+                - detail
+                title: ErrorModel
+              examples:
+                REGISTER_USER_ALREADY_EXISTS:
+                  summary: A user with this email already exists.
+                  value:
+                    detail: REGISTER_USER_ALREADY_EXISTS
+                REGISTER_INVALID_PASSWORD:
+                  summary: Password validation failed.
+                  value:
+                    detail:
+                      code: REGISTER_INVALID_PASSWORD
+                      reason: Password should beat least 3 characters
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /industries:
+    get:
+      tags:
+      - industries
+      summary: List Industries
+      description: List all industries
+      operationId: list_industries_industries_get
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Page Size
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response List Industries Industries Get
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+    post:
+      tags:
+      - industries
+      summary: Create Industry
+      description: Create a new industry
+      operationId: create_industry_industries_post
+      parameters:
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                  title: Name
+                description:
+                  anyOf:
+                  - type: string
+                  - type: "null"
+                  title: Description
+              type: object
+              required:
+              - name
+              title: IndustryCreate
+      responses:
+        "201":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  name:
+                    type: string
+                    title: Name
+                  description:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Description
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - name
+                - id
+                - created_at
+                - updated_at
+                title: IndustryResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /industries/{industry_id}:
+    get:
+      tags:
+      - industries
+      summary: Get Industry
+      description: Get a specific industry
+      operationId: get_industry_industries__industry_id__get
+      parameters:
+      - name: industry_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Industry Id
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  name:
+                    type: string
+                    title: Name
+                  description:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Description
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - name
+                - id
+                - created_at
+                - updated_at
+                title: IndustryResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+    patch:
+      tags:
+      - industries
+      summary: Update Industry
+      description: Update an industry
+      operationId: update_industry_industries__industry_id__patch
+      parameters:
+      - name: industry_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Industry Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  anyOf:
+                  - type: string
+                  - type: "null"
+                  title: Name
+                description:
+                  anyOf:
+                  - type: string
+                  - type: "null"
+                  title: Description
+              type: object
+              title: IndustryUpdate
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  name:
+                    type: string
+                    title: Name
+                  description:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Description
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - name
+                - id
+                - created_at
+                - updated_at
+                title: IndustryResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+    delete:
+      tags:
+      - industries
+      summary: Delete Industry
+      description: Delete an industry
+      operationId: delete_industry_industries__industry_id__delete
+      parameters:
+      - name: industry_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Industry Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /companies:
+    get:
+      tags:
+      - companies
+      summary: List Companies
+      description: List all companies with optional filters
+      operationId: list_companies_companies_get
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Page Size
+      - name: industry_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: "null"
+          title: Industry Id
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Q
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response List Companies Companies Get
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+    post:
+      tags:
+      - companies
+      summary: Create Company
+      description: Create a new company
+      operationId: create_company_companies_post
+      parameters:
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                  title: Name
+                industry_id:
+                  type: string
+                  format: uuid
+                  title: Industry Id
+                description:
+                  anyOf:
+                  - type: string
+                  - type: "null"
+                  title: Description
+                website:
+                  anyOf:
+                  - type: string
+                  - type: "null"
+                  title: Website
+              type: object
+              required:
+              - name
+              - industry_id
+              title: CompanyCreate
+      responses:
+        "201":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  name:
+                    type: string
+                    title: Name
+                  industry_id:
+                    type: string
+                    format: uuid
+                    title: Industry Id
+                  description:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Description
+                  website:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Website
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - name
+                - industry_id
+                - id
+                - created_at
+                - updated_at
+                title: CompanyResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /companies/{company_id}:
+    get:
+      tags:
+      - companies
+      summary: Get Company
+      description: Get a specific company
+      operationId: get_company_companies__company_id__get
+      parameters:
+      - name: company_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Company Id
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  name:
+                    type: string
+                    title: Name
+                  industry_id:
+                    type: string
+                    format: uuid
+                    title: Industry Id
+                  description:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Description
+                  website:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Website
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - name
+                - industry_id
+                - id
+                - created_at
+                - updated_at
+                title: CompanyResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+    patch:
+      tags:
+      - companies
+      summary: Update Company
+      description: Update a company
+      operationId: update_company_companies__company_id__patch
+      parameters:
+      - name: company_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Company Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  anyOf:
+                  - type: string
+                  - type: "null"
+                  title: Name
+                industry_id:
+                  anyOf:
+                  - type: string
+                    format: uuid
+                  - type: "null"
+                  title: Industry Id
+                description:
+                  anyOf:
+                  - type: string
+                  - type: "null"
+                  title: Description
+                website:
+                  anyOf:
+                  - type: string
+                  - type: "null"
+                  title: Website
+              type: object
+              title: CompanyUpdate
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  name:
+                    type: string
+                    title: Name
+                  industry_id:
+                    type: string
+                    format: uuid
+                    title: Industry Id
+                  description:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Description
+                  website:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Website
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - name
+                - industry_id
+                - id
+                - created_at
+                - updated_at
+                title: CompanyResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+    delete:
+      tags:
+      - companies
+      summary: Delete Company
+      description: Delete a company
+      operationId: delete_company_companies__company_id__delete
+      parameters:
+      - name: company_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Company Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /transcripts:
+    get:
+      tags:
+      - transcripts
+      summary: List Transcripts
+      description: List transcripts with optional filters
+      operationId: list_transcripts_transcripts_get
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Page Size
+      - name: company_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: "null"
+          title: Company Id
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            enum:
+            - uploaded
+            - processing
+            - completed
+            - failed
+            title: TranscriptStatus
+          - type: "null"
+          title: Status
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response List Transcripts Transcripts Get
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+    post:
+      tags:
+      - transcripts
+      summary: Upload Transcript
+      description: Upload a transcript and trigger AI extraction
+      operationId: upload_transcript_transcripts_post
+      parameters:
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  title: File
+                company_id:
+                  type: string
+                  format: uuid
+                  title: Company Id
+              type: object
+              required:
+              - file
+              - company_id
+              title: Body_upload_transcript_transcripts_post
+      responses:
+        "201":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  filename:
+                    type: string
+                    title: Filename
+                  company_id:
+                    type: string
+                    format: uuid
+                    title: Company Id
+                  uploaded_by_id:
+                    type: string
+                    format: uuid
+                    title: Uploaded By Id
+                  status:
+                    type: string
+                    enum:
+                    - uploaded
+                    - processing
+                    - completed
+                    - failed
+                    title: TranscriptStatus
+                  task_id:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Task Id
+                  chunk_count:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Chunk Count
+                  chunks_processed:
+                    type: integer
+                    title: Chunks Processed
+                  error_message:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Error Message
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - id
+                - filename
+                - company_id
+                - uploaded_by_id
+                - status
+                - chunks_processed
+                - created_at
+                - updated_at
+                title: TranscriptResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /transcripts/{transcript_id}:
+    get:
+      tags:
+      - transcripts
+      summary: Get Transcript
+      description: Get a specific transcript
+      operationId: get_transcript_transcripts__transcript_id__get
+      parameters:
+      - name: transcript_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Transcript Id
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  filename:
+                    type: string
+                    title: Filename
+                  company_id:
+                    type: string
+                    format: uuid
+                    title: Company Id
+                  uploaded_by_id:
+                    type: string
+                    format: uuid
+                    title: Uploaded By Id
+                  status:
+                    type: string
+                    enum:
+                    - uploaded
+                    - processing
+                    - completed
+                    - failed
+                    title: TranscriptStatus
+                  task_id:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Task Id
+                  chunk_count:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Chunk Count
+                  chunks_processed:
+                    type: integer
+                    title: Chunks Processed
+                  error_message:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Error Message
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - id
+                - filename
+                - company_id
+                - uploaded_by_id
+                - status
+                - chunks_processed
+                - created_at
+                - updated_at
+                title: TranscriptResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+    delete:
+      tags:
+      - transcripts
+      summary: Delete Transcript
+      description: Delete a transcript
+      operationId: delete_transcript_transcripts__transcript_id__delete
+      parameters:
+      - name: transcript_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Transcript Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /transcripts/{transcript_id}/reprocess:
+    post:
+      tags:
+      - transcripts
+      summary: Reprocess Transcript
+      description: Retry transcript extraction
+      operationId: reprocess_transcript_transcripts__transcript_id__reprocess_post
+      parameters:
+      - name: transcript_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Transcript Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /transcripts/{transcript_id}/events:
+    get:
+      tags:
+      - transcripts
+      summary: Transcript Progress
+      description: SSE stream for real-time transcript processing progress
+      operationId: transcript_progress_transcripts__transcript_id__events_get
+      parameters:
+      - name: transcript_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Transcript Id
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /use-cases:
+    get:
+      tags:
+      - use-cases
+      summary: List Use Cases
+      description: List use cases with optional filters
+      operationId: list_use_cases_use_cases_get
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Page Size
+      - name: company_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: "null"
+          title: Company Id
+      - name: industry_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: "null"
+          title: Industry Id
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            enum:
+            - new
+            - under_review
+            - approved
+            - in_progress
+            - completed
+            - archived
+            title: UseCaseStatus
+          - type: "null"
+          title: Status
+      - name: assignee_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: "null"
+          title: Assignee Id
+      - name: min_confidence
+        in: query
+        required: false
+        schema:
+          type: number
+          default: 0
+          title: Min Confidence
+      - name: tags
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Tags
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Q
+      - name: sort_by
+        in: query
+        required: false
+        schema:
+          type: string
+          default: created_at
+          title: Sort By
+      - name: order
+        in: query
+        required: false
+        schema:
+          type: string
+          default: desc
+          title: Order
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response List Use Cases Use Cases Get
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+    post:
+      tags:
+      - use-cases
+      summary: Create Use Case
+      description: Create a new use case manually
+      operationId: create_use_case_use_cases_post
+      parameters:
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                title:
+                  type: string
+                  title: Title
+                description:
+                  type: string
+                  title: Description
+                expected_benefit:
+                  anyOf:
+                  - type: string
+                  - type: "null"
+                  title: Expected Benefit
+                tags:
+                  anyOf:
+                  - items:
+                      type: string
+                    type: array
+                  - type: "null"
+                  title: Tags
+                company_id:
+                  type: string
+                  format: uuid
+                  title: Company Id
+                transcript_id:
+                  anyOf:
+                  - type: string
+                    format: uuid
+                  - type: "null"
+                  title: Transcript Id
+              type: object
+              required:
+              - title
+              - description
+              - company_id
+              title: UseCaseCreate
+      responses:
+        "201":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  title:
+                    type: string
+                    title: Title
+                  description:
+                    type: string
+                    title: Description
+                  expected_benefit:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Expected Benefit
+                  tags:
+                    anyOf:
+                    - items:
+                        type: string
+                      type: array
+                    - type: "null"
+                    title: Tags
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  company_id:
+                    type: string
+                    format: uuid
+                    title: Company Id
+                  transcript_id:
+                    anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                    title: Transcript Id
+                  assignee_id:
+                    anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                    title: Assignee Id
+                  created_by_id:
+                    type: string
+                    format: uuid
+                    title: Created By Id
+                  status:
+                    type: string
+                    enum:
+                    - new
+                    - under_review
+                    - approved
+                    - in_progress
+                    - completed
+                    - archived
+                    title: UseCaseStatus
+                  confidence_score:
+                    type: number
+                    title: Confidence Score
+                  effort_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Effort Score
+                  impact_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Impact Score
+                  complexity_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Complexity Score
+                  strategic_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Strategic Score
+                  priority_score:
+                    anyOf:
+                    - type: number
+                    - type: "null"
+                    title: Priority Score
+                  qdrant_id:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Qdrant Id
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - title
+                - description
+                - id
+                - company_id
+                - created_by_id
+                - status
+                - confidence_score
+                - created_at
+                - updated_at
+                title: UseCaseResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /use-cases/{use_case_id}:
+    get:
+      tags:
+      - use-cases
+      summary: Get Use Case
+      description: Get a specific use case
+      operationId: get_use_case_use_cases__use_case_id__get
+      parameters:
+      - name: use_case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Use Case Id
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  title:
+                    type: string
+                    title: Title
+                  description:
+                    type: string
+                    title: Description
+                  expected_benefit:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Expected Benefit
+                  tags:
+                    anyOf:
+                    - items:
+                        type: string
+                      type: array
+                    - type: "null"
+                    title: Tags
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  company_id:
+                    type: string
+                    format: uuid
+                    title: Company Id
+                  transcript_id:
+                    anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                    title: Transcript Id
+                  assignee_id:
+                    anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                    title: Assignee Id
+                  created_by_id:
+                    type: string
+                    format: uuid
+                    title: Created By Id
+                  status:
+                    type: string
+                    enum:
+                    - new
+                    - under_review
+                    - approved
+                    - in_progress
+                    - completed
+                    - archived
+                    title: UseCaseStatus
+                  confidence_score:
+                    type: number
+                    title: Confidence Score
+                  effort_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Effort Score
+                  impact_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Impact Score
+                  complexity_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Complexity Score
+                  strategic_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Strategic Score
+                  priority_score:
+                    anyOf:
+                    - type: number
+                    - type: "null"
+                    title: Priority Score
+                  qdrant_id:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Qdrant Id
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - title
+                - description
+                - id
+                - company_id
+                - created_by_id
+                - status
+                - confidence_score
+                - created_at
+                - updated_at
+                title: UseCaseResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+    patch:
+      tags:
+      - use-cases
+      summary: Update Use Case
+      description: Update a use case
+      operationId: update_use_case_use_cases__use_case_id__patch
+      parameters:
+      - name: use_case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Use Case Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                title:
+                  anyOf:
+                  - type: string
+                  - type: "null"
+                  title: Title
+                description:
+                  anyOf:
+                  - type: string
+                  - type: "null"
+                  title: Description
+                expected_benefit:
+                  anyOf:
+                  - type: string
+                  - type: "null"
+                  title: Expected Benefit
+                tags:
+                  anyOf:
+                  - items:
+                      type: string
+                    type: array
+                  - type: "null"
+                  title: Tags
+              type: object
+              title: UseCaseUpdate
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  title:
+                    type: string
+                    title: Title
+                  description:
+                    type: string
+                    title: Description
+                  expected_benefit:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Expected Benefit
+                  tags:
+                    anyOf:
+                    - items:
+                        type: string
+                      type: array
+                    - type: "null"
+                    title: Tags
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  company_id:
+                    type: string
+                    format: uuid
+                    title: Company Id
+                  transcript_id:
+                    anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                    title: Transcript Id
+                  assignee_id:
+                    anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                    title: Assignee Id
+                  created_by_id:
+                    type: string
+                    format: uuid
+                    title: Created By Id
+                  status:
+                    type: string
+                    enum:
+                    - new
+                    - under_review
+                    - approved
+                    - in_progress
+                    - completed
+                    - archived
+                    title: UseCaseStatus
+                  confidence_score:
+                    type: number
+                    title: Confidence Score
+                  effort_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Effort Score
+                  impact_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Impact Score
+                  complexity_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Complexity Score
+                  strategic_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Strategic Score
+                  priority_score:
+                    anyOf:
+                    - type: number
+                    - type: "null"
+                    title: Priority Score
+                  qdrant_id:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Qdrant Id
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - title
+                - description
+                - id
+                - company_id
+                - created_by_id
+                - status
+                - confidence_score
+                - created_at
+                - updated_at
+                title: UseCaseResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+    delete:
+      tags:
+      - use-cases
+      summary: Delete Use Case
+      description: Delete a use case
+      operationId: delete_use_case_use_cases__use_case_id__delete
+      parameters:
+      - name: use_case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Use Case Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /use-cases/{use_case_id}/status:
+    patch:
+      tags:
+      - use-cases
+      summary: Update Status
+      description: Update use case status
+      operationId: update_status_use_cases__use_case_id__status_patch
+      parameters:
+      - name: use_case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Use Case Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - new
+                  - under_review
+                  - approved
+                  - in_progress
+                  - completed
+                  - archived
+                  title: UseCaseStatus
+              type: object
+              required:
+              - status
+              title: UseCaseStatusUpdate
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  title:
+                    type: string
+                    title: Title
+                  description:
+                    type: string
+                    title: Description
+                  expected_benefit:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Expected Benefit
+                  tags:
+                    anyOf:
+                    - items:
+                        type: string
+                      type: array
+                    - type: "null"
+                    title: Tags
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  company_id:
+                    type: string
+                    format: uuid
+                    title: Company Id
+                  transcript_id:
+                    anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                    title: Transcript Id
+                  assignee_id:
+                    anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                    title: Assignee Id
+                  created_by_id:
+                    type: string
+                    format: uuid
+                    title: Created By Id
+                  status:
+                    type: string
+                    enum:
+                    - new
+                    - under_review
+                    - approved
+                    - in_progress
+                    - completed
+                    - archived
+                    title: UseCaseStatus
+                  confidence_score:
+                    type: number
+                    title: Confidence Score
+                  effort_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Effort Score
+                  impact_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Impact Score
+                  complexity_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Complexity Score
+                  strategic_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Strategic Score
+                  priority_score:
+                    anyOf:
+                    - type: number
+                    - type: "null"
+                    title: Priority Score
+                  qdrant_id:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Qdrant Id
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - title
+                - description
+                - id
+                - company_id
+                - created_by_id
+                - status
+                - confidence_score
+                - created_at
+                - updated_at
+                title: UseCaseResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /use-cases/{use_case_id}/scores:
+    patch:
+      tags:
+      - use-cases
+      summary: Update Scores
+      description: Update use case scores
+      operationId: update_scores_use_cases__use_case_id__scores_patch
+      parameters:
+      - name: use_case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Use Case Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                effort_score:
+                  anyOf:
+                  - type: integer
+                    maximum: 5
+                    minimum: 1
+                  - type: "null"
+                  title: Effort Score
+                impact_score:
+                  anyOf:
+                  - type: integer
+                    maximum: 5
+                    minimum: 1
+                  - type: "null"
+                  title: Impact Score
+                complexity_score:
+                  anyOf:
+                  - type: integer
+                    maximum: 5
+                    minimum: 1
+                  - type: "null"
+                  title: Complexity Score
+                strategic_score:
+                  anyOf:
+                  - type: integer
+                    maximum: 5
+                    minimum: 1
+                  - type: "null"
+                  title: Strategic Score
+              type: object
+              title: UseCaseScoresUpdate
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  title:
+                    type: string
+                    title: Title
+                  description:
+                    type: string
+                    title: Description
+                  expected_benefit:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Expected Benefit
+                  tags:
+                    anyOf:
+                    - items:
+                        type: string
+                      type: array
+                    - type: "null"
+                    title: Tags
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  company_id:
+                    type: string
+                    format: uuid
+                    title: Company Id
+                  transcript_id:
+                    anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                    title: Transcript Id
+                  assignee_id:
+                    anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                    title: Assignee Id
+                  created_by_id:
+                    type: string
+                    format: uuid
+                    title: Created By Id
+                  status:
+                    type: string
+                    enum:
+                    - new
+                    - under_review
+                    - approved
+                    - in_progress
+                    - completed
+                    - archived
+                    title: UseCaseStatus
+                  confidence_score:
+                    type: number
+                    title: Confidence Score
+                  effort_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Effort Score
+                  impact_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Impact Score
+                  complexity_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Complexity Score
+                  strategic_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Strategic Score
+                  priority_score:
+                    anyOf:
+                    - type: number
+                    - type: "null"
+                    title: Priority Score
+                  qdrant_id:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Qdrant Id
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - title
+                - description
+                - id
+                - company_id
+                - created_by_id
+                - status
+                - confidence_score
+                - created_at
+                - updated_at
+                title: UseCaseResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /use-cases/{use_case_id}/assignee:
+    patch:
+      tags:
+      - use-cases
+      summary: Update Assignee
+      description: Assign use case to a team member
+      operationId: update_assignee_use_cases__use_case_id__assignee_patch
+      parameters:
+      - name: use_case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Use Case Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                assignee_id:
+                  anyOf:
+                  - type: string
+                    format: uuid
+                  - type: "null"
+                  title: Assignee Id
+              type: object
+              title: UseCaseAssigneeUpdate
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  title:
+                    type: string
+                    title: Title
+                  description:
+                    type: string
+                    title: Description
+                  expected_benefit:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Expected Benefit
+                  tags:
+                    anyOf:
+                    - items:
+                        type: string
+                      type: array
+                    - type: "null"
+                    title: Tags
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  company_id:
+                    type: string
+                    format: uuid
+                    title: Company Id
+                  transcript_id:
+                    anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                    title: Transcript Id
+                  assignee_id:
+                    anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                    title: Assignee Id
+                  created_by_id:
+                    type: string
+                    format: uuid
+                    title: Created By Id
+                  status:
+                    type: string
+                    enum:
+                    - new
+                    - under_review
+                    - approved
+                    - in_progress
+                    - completed
+                    - archived
+                    title: UseCaseStatus
+                  confidence_score:
+                    type: number
+                    title: Confidence Score
+                  effort_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Effort Score
+                  impact_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Impact Score
+                  complexity_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Complexity Score
+                  strategic_score:
+                    anyOf:
+                    - type: integer
+                    - type: "null"
+                    title: Strategic Score
+                  priority_score:
+                    anyOf:
+                    - type: number
+                    - type: "null"
+                    title: Priority Score
+                  qdrant_id:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Qdrant Id
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - title
+                - description
+                - id
+                - company_id
+                - created_by_id
+                - status
+                - confidence_score
+                - created_at
+                - updated_at
+                title: UseCaseResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /use-cases/{use_case_id}/relations:
+    post:
+      tags:
+      - use-cases
+      summary: Create Relation
+      description: Create a relation between two use cases
+      operationId: create_relation_use_cases__use_case_id__relations_post
+      parameters:
+      - name: use_case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Use Case Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                target_id:
+                  type: string
+                  format: uuid
+                  title: Target Id
+                relation_type:
+                  type: string
+                  enum:
+                  - depends_on
+                  - complements
+                  - conflicts_with
+                  - duplicates
+                  title: RelationType
+                note:
+                  anyOf:
+                  - type: string
+                  - type: "null"
+                  title: Note
+              type: object
+              required:
+              - target_id
+              - relation_type
+              title: UseCaseRelationCreate
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /use-cases/{use_case_id}/relations/{relation_id}:
+    delete:
+      tags:
+      - use-cases
+      summary: Delete Relation
+      description: Delete a relation
+      operationId: delete_relation_use_cases__use_case_id__relations__relation_id__delete
+      parameters:
+      - name: use_case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Use Case Id
+      - name: relation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Relation Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /use-cases/{use_case_id}/comments:
+    get:
+      tags:
+      - comments
+      summary: List Comments
+      description: List comments on a use case
+      operationId: list_comments_use_cases__use_case_id__comments_get
+      parameters:
+      - name: use_case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Use Case Id
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Page Size
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response List Comments Use Cases  Use Case Id  Comments Get
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+    post:
+      tags:
+      - comments
+      summary: Create Comment
+      description: Add a comment to a use case
+      operationId: create_comment_use_cases__use_case_id__comments_post
+      parameters:
+      - name: use_case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Use Case Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                body:
+                  type: string
+                  title: Body
+              type: object
+              required:
+              - body
+              title: CommentCreate
+      responses:
+        "201":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  body:
+                    type: string
+                    title: Body
+                  use_case_id:
+                    type: string
+                    format: uuid
+                    title: Use Case Id
+                  author_id:
+                    type: string
+                    format: uuid
+                    title: Author Id
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - id
+                - body
+                - use_case_id
+                - author_id
+                - created_at
+                - updated_at
+                title: CommentResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /use-cases/{use_case_id}/comments/{comment_id}:
+    patch:
+      tags:
+      - comments
+      summary: Update Comment
+      description: "Edit a comment (only own comment, or admin)"
+      operationId: update_comment_use_cases__use_case_id__comments__comment_id__patch
+      parameters:
+      - name: use_case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Use Case Id
+      - name: comment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Comment Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                body:
+                  type: string
+                  title: Body
+              type: object
+              required:
+              - body
+              title: CommentUpdate
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  body:
+                    type: string
+                    title: Body
+                  use_case_id:
+                    type: string
+                    format: uuid
+                    title: Use Case Id
+                  author_id:
+                    type: string
+                    format: uuid
+                    title: Author Id
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - id
+                - body
+                - use_case_id
+                - author_id
+                - created_at
+                - updated_at
+                title: CommentResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+    delete:
+      tags:
+      - comments
+      summary: Delete Comment
+      description: "Delete a comment (only own comment, or admin)"
+      operationId: delete_comment_use_cases__use_case_id__comments__comment_id__delete
+      parameters:
+      - name: use_case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Use Case Id
+      - name: comment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Comment Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /search/use-cases:
+    post:
+      tags:
+      - search
+      summary: Search Use Cases
+      description: Hybrid semantic + keyword search for use cases
+      operationId: search_use_cases_search_use_cases_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                query:
+                  type: string
+                  title: Query
+                filters:
+                  anyOf:
+                  - additionalProperties: true
+                    type: object
+                  - type: "null"
+                  title: Filters
+                limit:
+                  type: integer
+                  title: Limit
+                  default: 10
+              type: object
+              required:
+              - query
+              title: SearchQuery
+        required: true
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Search Use Cases Search Use Cases Post
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /search/similar/{use_case_id}:
+    get:
+      tags:
+      - search
+      summary: Find Similar
+      description: Find use cases similar to a given one
+      operationId: find_similar_search_similar__use_case_id__get
+      parameters:
+      - name: use_case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Use Case Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 10
+          title: Limit
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Find Similar Search Similar  Use Case Id  Get
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /search/cross-industry:
+    post:
+      tags:
+      - search
+      summary: Cross Industry Theme
+      description: |-
+        Surface a theme across industries.
+        E.g., "automation" might appear in Maschinenbau, Energieversorgung, etc.
+      operationId: cross_industry_theme_search_cross_industry_post
+      parameters:
+      - name: theme
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Theme
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /auth/me:
+    get:
+      tags:
+      - auth
+      summary: Get Current User
+      description: Get current authenticated user
+      operationId: get_current_user_auth_me_get
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  email:
+                    type: string
+                    title: Email
+                  full_name:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Full Name
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  role:
+                    type: string
+                    enum:
+                    - reader
+                    - maintainer
+                    - admin
+                    title: UserRole
+                  is_active:
+                    type: boolean
+                    title: Is Active
+                  is_verified:
+                    type: boolean
+                    title: Is Verified
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - email
+                - id
+                - role
+                - is_active
+                - is_verified
+                - created_at
+                - updated_at
+                title: UserResponse
+      security:
+      - OAuth2PasswordBearer: []
+  /auth/users:
+    get:
+      tags:
+      - auth
+      summary: List Users
+      description: List all team members (admin only)
+      operationId: list_users_auth_users_get
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 1
+          title: Page
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 20
+          title: Page Size
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response List Users Auth Users Get
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /auth/users/{user_id}:
+    get:
+      tags:
+      - auth
+      summary: Get User
+      description: Get a specific user
+      operationId: get_user_auth_users__user_id__get
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: User Id
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  email:
+                    type: string
+                    title: Email
+                  full_name:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Full Name
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  role:
+                    type: string
+                    enum:
+                    - reader
+                    - maintainer
+                    - admin
+                    title: UserRole
+                  is_active:
+                    type: boolean
+                    title: Is Active
+                  is_verified:
+                    type: boolean
+                    title: Is Verified
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - email
+                - id
+                - role
+                - is_active
+                - is_verified
+                - created_at
+                - updated_at
+                title: UserResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+    delete:
+      tags:
+      - auth
+      summary: Delete User
+      description: Delete a user (admin only)
+      operationId: delete_user_auth_users__user_id__delete
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: User Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /auth/users/{user_id}/role:
+    patch:
+      tags:
+      - auth
+      summary: Update User Role
+      description: Update user role (admin only)
+      operationId: update_user_role_auth_users__user_id__role_patch
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: User Id
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Email
+      - name: full_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: role
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      - name: is_active
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Active
+      - name: is_verified
+        in: query
+        required: true
+        schema:
+          type: boolean
+          title: Is Verified
+      - name: created_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Created At
+      - name: updated_at
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Updated At
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                role:
+                  type: string
+                  enum:
+                  - reader
+                  - maintainer
+                  - admin
+                  title: UserRole
+              type: object
+              required:
+              - role
+              title: UserUpdateRole
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                properties:
+                  email:
+                    type: string
+                    title: Email
+                  full_name:
+                    anyOf:
+                    - type: string
+                    - type: "null"
+                    title: Full Name
+                  id:
+                    type: string
+                    format: uuid
+                    title: Id
+                  role:
+                    type: string
+                    enum:
+                    - reader
+                    - maintainer
+                    - admin
+                    title: UserRole
+                  is_active:
+                    type: boolean
+                    title: Is Active
+                  is_verified:
+                    type: boolean
+                    title: Is Verified
+                  created_at:
+                    type: string
+                    format: date-time
+                    title: Created At
+                  updated_at:
+                    type: string
+                    format: date-time
+                    title: Updated At
+                type: object
+                required:
+                - email
+                - id
+                - role
+                - is_active
+                - is_verified
+                - created_at
+                - updated_at
+                title: UserResponse
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    items:
+                      properties:
+                        loc:
+                          items:
+                            anyOf:
+                            - type: string
+                            - type: integer
+                          type: array
+                          title: Location
+                        msg:
+                          type: string
+                          title: Message
+                        type:
+                          type: string
+                          title: Error Type
+                      type: object
+                      required:
+                      - loc
+                      - msg
+                      - type
+                      title: ValidationError
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+  /health:
+    get:
+      summary: Health Check
+      operationId: health_check_health_get
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /:
+    get:
+      summary: Root
+      operationId: root__get
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    BearerRefreshResponse:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        token_type:
+          type: string
+          title: Token Type
+        refresh_token:
+          type: string
+          title: Refresh Token
+      type: object
+      required:
+      - access_token
+      - token_type
+      - refresh_token
+      title: BearerRefreshResponse
+    Body_auth_jwt_login_auth_jwt_login_post:
+      properties:
+        grant_type:
+          anyOf:
+          - type: string
+            pattern: ^password$
+          - type: "null"
+          title: Grant Type
+        username:
+          type: string
+          title: Username
+        password:
+          type: string
+          format: password
+          title: Password
+        scope:
+          type: string
+          title: Scope
+          default: ""
+        client_id:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Client Id
+        client_secret:
+          anyOf:
+          - type: string
+          - type: "null"
+          format: password
+          title: Client Secret
+      type: object
+      required:
+      - username
+      - password
+      title: Body_auth_jwt_login_auth_jwt_login_post
+    Body_upload_transcript_transcripts_post:
+      properties:
+        file:
+          type: string
+          format: binary
+          title: File
+        company_id:
+          type: string
+          format: uuid
+          title: Company Id
+      type: object
+      required:
+      - file
+      - company_id
+      title: Body_upload_transcript_transcripts_post
+    CommentCreate:
+      properties:
+        body:
+          type: string
+          title: Body
+      type: object
+      required:
+      - body
+      title: CommentCreate
+    CommentResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        body:
+          type: string
+          title: Body
+        use_case_id:
+          type: string
+          format: uuid
+          title: Use Case Id
+        author_id:
+          type: string
+          format: uuid
+          title: Author Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - body
+      - use_case_id
+      - author_id
+      - created_at
+      - updated_at
+      title: CommentResponse
+    CommentUpdate:
+      properties:
+        body:
+          type: string
+          title: Body
+      type: object
+      required:
+      - body
+      title: CommentUpdate
+    CompanyCreate:
+      properties:
+        name:
+          type: string
+          title: Name
+        industry_id:
+          type: string
+          format: uuid
+          title: Industry Id
+        description:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Description
+        website:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Website
+      type: object
+      required:
+      - name
+      - industry_id
+      title: CompanyCreate
+    CompanyResponse:
+      properties:
+        name:
+          type: string
+          title: Name
+        industry_id:
+          type: string
+          format: uuid
+          title: Industry Id
+        description:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Description
+        website:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Website
+        id:
+          type: string
+          format: uuid
+          title: Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - name
+      - industry_id
+      - id
+      - created_at
+      - updated_at
+      title: CompanyResponse
+    CompanyUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Name
+        industry_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: "null"
+          title: Industry Id
+        description:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Description
+        website:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Website
+      type: object
+      title: CompanyUpdate
+    ErrorModel:
+      properties:
+        detail:
+          anyOf:
+          - type: string
+          - additionalProperties:
+              type: string
+            type: object
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: ErrorModel
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            properties:
+              loc:
+                items:
+                  anyOf:
+                  - type: string
+                  - type: integer
+                type: array
+                title: Location
+              msg:
+                type: string
+                title: Message
+              type:
+                type: string
+                title: Error Type
+            type: object
+            required:
+            - loc
+            - msg
+            - type
+            title: ValidationError
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    IndustryCreate:
+      properties:
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Description
+      type: object
+      required:
+      - name
+      title: IndustryCreate
+    IndustryResponse:
+      properties:
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Description
+        id:
+          type: string
+          format: uuid
+          title: Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - name
+      - id
+      - created_at
+      - updated_at
+      title: IndustryResponse
+    IndustryUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Description
+      type: object
+      title: IndustryUpdate
+    RelationType:
+      type: string
+      enum:
+      - depends_on
+      - complements
+      - conflicts_with
+      - duplicates
+      title: RelationType
+    SearchQuery:
+      properties:
+        query:
+          type: string
+          title: Query
+        filters:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: "null"
+          title: Filters
+        limit:
+          type: integer
+          title: Limit
+          default: 10
+      type: object
+      required:
+      - query
+      title: SearchQuery
+    TranscriptResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        filename:
+          type: string
+          title: Filename
+        company_id:
+          type: string
+          format: uuid
+          title: Company Id
+        uploaded_by_id:
+          type: string
+          format: uuid
+          title: Uploaded By Id
+        status:
+          type: string
+          enum:
+          - uploaded
+          - processing
+          - completed
+          - failed
+          title: TranscriptStatus
+        task_id:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Task Id
+        chunk_count:
+          anyOf:
+          - type: integer
+          - type: "null"
+          title: Chunk Count
+        chunks_processed:
+          type: integer
+          title: Chunks Processed
+        error_message:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Error Message
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - filename
+      - company_id
+      - uploaded_by_id
+      - status
+      - chunks_processed
+      - created_at
+      - updated_at
+      title: TranscriptResponse
+    TranscriptStatus:
+      type: string
+      enum:
+      - uploaded
+      - processing
+      - completed
+      - failed
+      title: TranscriptStatus
+    UseCaseAssigneeUpdate:
+      properties:
+        assignee_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: "null"
+          title: Assignee Id
+      type: object
+      title: UseCaseAssigneeUpdate
+    UseCaseCreate:
+      properties:
+        title:
+          type: string
+          title: Title
+        description:
+          type: string
+          title: Description
+        expected_benefit:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Expected Benefit
+        tags:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: "null"
+          title: Tags
+        company_id:
+          type: string
+          format: uuid
+          title: Company Id
+        transcript_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: "null"
+          title: Transcript Id
+      type: object
+      required:
+      - title
+      - description
+      - company_id
+      title: UseCaseCreate
+    UseCaseRelationCreate:
+      properties:
+        target_id:
+          type: string
+          format: uuid
+          title: Target Id
+        relation_type:
+          type: string
+          enum:
+          - depends_on
+          - complements
+          - conflicts_with
+          - duplicates
+          title: RelationType
+        note:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Note
+      type: object
+      required:
+      - target_id
+      - relation_type
+      title: UseCaseRelationCreate
+    UseCaseResponse:
+      properties:
+        title:
+          type: string
+          title: Title
+        description:
+          type: string
+          title: Description
+        expected_benefit:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Expected Benefit
+        tags:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: "null"
+          title: Tags
+        id:
+          type: string
+          format: uuid
+          title: Id
+        company_id:
+          type: string
+          format: uuid
+          title: Company Id
+        transcript_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: "null"
+          title: Transcript Id
+        assignee_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: "null"
+          title: Assignee Id
+        created_by_id:
+          type: string
+          format: uuid
+          title: Created By Id
+        status:
+          type: string
+          enum:
+          - new
+          - under_review
+          - approved
+          - in_progress
+          - completed
+          - archived
+          title: UseCaseStatus
+        confidence_score:
+          type: number
+          title: Confidence Score
+        effort_score:
+          anyOf:
+          - type: integer
+          - type: "null"
+          title: Effort Score
+        impact_score:
+          anyOf:
+          - type: integer
+          - type: "null"
+          title: Impact Score
+        complexity_score:
+          anyOf:
+          - type: integer
+          - type: "null"
+          title: Complexity Score
+        strategic_score:
+          anyOf:
+          - type: integer
+          - type: "null"
+          title: Strategic Score
+        priority_score:
+          anyOf:
+          - type: number
+          - type: "null"
+          title: Priority Score
+        qdrant_id:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Qdrant Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - title
+      - description
+      - id
+      - company_id
+      - created_by_id
+      - status
+      - confidence_score
+      - created_at
+      - updated_at
+      title: UseCaseResponse
+    UseCaseScoresUpdate:
+      properties:
+        effort_score:
+          anyOf:
+          - type: integer
+            maximum: 5
+            minimum: 1
+          - type: "null"
+          title: Effort Score
+        impact_score:
+          anyOf:
+          - type: integer
+            maximum: 5
+            minimum: 1
+          - type: "null"
+          title: Impact Score
+        complexity_score:
+          anyOf:
+          - type: integer
+            maximum: 5
+            minimum: 1
+          - type: "null"
+          title: Complexity Score
+        strategic_score:
+          anyOf:
+          - type: integer
+            maximum: 5
+            minimum: 1
+          - type: "null"
+          title: Strategic Score
+      type: object
+      title: UseCaseScoresUpdate
+    UseCaseStatus:
+      type: string
+      enum:
+      - new
+      - under_review
+      - approved
+      - in_progress
+      - completed
+      - archived
+      title: UseCaseStatus
+    UseCaseStatusUpdate:
+      properties:
+        status:
+          type: string
+          enum:
+          - new
+          - under_review
+          - approved
+          - in_progress
+          - completed
+          - archived
+          title: UseCaseStatus
+      type: object
+      required:
+      - status
+      title: UseCaseStatusUpdate
+    UseCaseUpdate:
+      properties:
+        title:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Title
+        description:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Description
+        expected_benefit:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Expected Benefit
+        tags:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: "null"
+          title: Tags
+      type: object
+      title: UseCaseUpdate
+    UserCreate:
+      properties:
+        email:
+          type: string
+          format: email
+          title: Email
+        password:
+          type: string
+          title: Password
+        is_active:
+          anyOf:
+          - type: boolean
+          - type: "null"
+          title: Is Active
+          default: true
+        is_superuser:
+          anyOf:
+          - type: boolean
+          - type: "null"
+          title: Is Superuser
+          default: false
+        is_verified:
+          anyOf:
+          - type: boolean
+          - type: "null"
+          title: Is Verified
+          default: false
+        full_name:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+      type: object
+      required:
+      - email
+      - password
+      title: UserCreate
+    UserResponse:
+      properties:
+        email:
+          type: string
+          title: Email
+        full_name:
+          anyOf:
+          - type: string
+          - type: "null"
+          title: Full Name
+        id:
+          type: string
+          format: uuid
+          title: Id
+        role:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+        is_active:
+          type: boolean
+          title: Is Active
+        is_verified:
+          type: boolean
+          title: Is Verified
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - email
+      - id
+      - role
+      - is_active
+      - is_verified
+      - created_at
+      - updated_at
+      title: UserResponse
+    UserRole:
+      type: string
+      enum:
+      - reader
+      - maintainer
+      - admin
+      title: UserRole
+    UserUpdateRole:
+      properties:
+        role:
+          type: string
+          enum:
+          - reader
+          - maintainer
+          - admin
+          title: UserRole
+      type: object
+      required:
+      - role
+      title: UserUpdateRole
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    OAuth2PasswordBearer:
+      type: oauth2
+      flows:
+        password:
+          scopes: {}
+          tokenUrl: auth/jwt/login

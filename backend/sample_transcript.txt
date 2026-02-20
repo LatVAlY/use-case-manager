@@ -1,0 +1,33 @@
+Workshop Transcript — Q4 Digital Strategy Session
+Company: TechCorp GmbH | Date: 2025-01-15
+
+Moderator: Let's start with your biggest operational pain points.
+
+Thomas (Head of Sales): We keep losing leads because our sales team has zero
+real-time visibility into which customers are about to churn. We need an early
+warning system — something that flags accounts before they leave.
+
+Sandra (CTO): We already collect clickstream data. We could build a predictive
+churn model on top of it. Doesn't need to be perfect, just directional.
+
+Maria (Operations Manager): From my side, the biggest bottleneck is manual invoice
+matching. We process around 500 invoices a month and the team spends three full
+days on it every month. Even automating 70% would be huge.
+
+Thomas: And if the invoice data were cleaner, our revenue reporting would actually
+be accurate. Right now we're always two weeks behind on actuals.
+
+Sandra: We also discussed customer onboarding last quarter. New clients wait 5 to 7
+days for account setup because everything is manual in the back office.
+
+Thomas: We lost two enterprise accounts because of that delay. It's a real problem.
+
+Maria: One more thing — our supplier contracts are PDFs scattered across shared
+drives. Nobody knows when they expire. Last month a contract auto-renewed and
+cost us 40,000 euros because nobody caught it in time.
+
+Sandra: A contract intelligence tool would solve that — something that parses PDFs
+and surfaces expiry dates and key clauses automatically.
+
+Thomas: Can we also look at the weekly sales report? I spend four hours every
+Friday pulling numbers from five different systems by hand.
