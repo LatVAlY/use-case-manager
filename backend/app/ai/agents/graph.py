@@ -1,7 +1,3 @@
-"""
-LangGraph multi-agent orchestration for the chat assistant.
-Routes user messages and invokes tools with streaming support.
-"""
 from typing import AsyncGenerator
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import MessagesState
@@ -18,10 +14,7 @@ def get_llm():
 
 
 def create_chat_agent(context: dict):
-    """
-    Create the chat agent graph with tools.
-    Context must include: transcript_service, use_case_service, company_service, knowledge_base, user_id
-    """
+
     llm = get_llm()
     tools = create_agent_tools(context)
     llm_with_tools = llm.bind_tools(tools)
@@ -54,7 +47,7 @@ def create_chat_agent(context: dict):
 
 
 def _to_messages(history: list) -> list[BaseMessage]:
-    """Convert history dicts to LangChain messages."""
+
     out = []
     for h in history:
         role, content = h.get("role", ""), h.get("content", "")
@@ -71,10 +64,7 @@ async def stream_agent_response(
     history: list,
     on_event=None,
 ) -> AsyncGenerator[str, None]:
-    """
-    Stream agent response token-by-token, yielding content chunks. on_event can be async.
-    Uses stream_mode=["messages","updates"] for token streaming + tool events.
-    """
+
     messages = _to_messages(history) + [HumanMessage(content=user_message)]
     if not any(isinstance(m, SystemMessage) for m in messages):
         messages = [SystemMessage(content=AGENT_SYSTEM)] + messages

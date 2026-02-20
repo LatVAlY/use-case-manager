@@ -1,7 +1,3 @@
-"""
-Agent tools for transcript, use case, and knowledge base operations.
-Tools receive a context dict with: transcript_service, use_case_service, company_service, knowledge_base, user_id.
-"""
 from uuid import UUID
 from typing import Any, Optional
 from langchain_core.tools import tool

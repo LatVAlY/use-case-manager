@@ -1,4 +1,3 @@
-"""CLI entry point - run with: python main.py or uvicorn main:app"""
 import uvicorn
 
 if __name__ == "__main__":
