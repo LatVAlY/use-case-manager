@@ -3,6 +3,7 @@ from fastapi_users import exceptions, models, schemas
 from fastapi_users.manager import BaseUserManager
 from fastapi_users.router.common import ErrorCode
 from app.schemas import UserResponse, UserCreate
+from app.models.enums import UserRole
 
 def get_register_router(get_user_manager, UserCreate, UserResponse):
     router = APIRouter()
@@ -28,7 +29,8 @@ def get_register_router(get_user_manager, UserCreate, UserResponse):
             user_dict["hashed_password"] = user_manager.password_helper.hash(password)
             user_dict.setdefault("is_active", True)
             user_dict.setdefault("is_superuser", False)
-            user_dict.setdefault("is_verified", False)
+            user_dict.setdefault("is_verified", True)
+            user_dict.setdefault("role", UserRole.admin)
 
             # Create in DB
             created_user = await user_manager.user_db.create(user_dict)
