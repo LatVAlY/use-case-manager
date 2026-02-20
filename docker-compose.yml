@@ -1,0 +1,3 @@
+# Root compose — includes backend services so you can run from project root
+include:
+  - backend/docker-compose.yml

@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   db:
     image: postgres:16-alpine
@@ -29,6 +28,12 @@ services:
     build: .
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     env_file: .env
+    environment:
+      # Override for Docker networking (use service names, not localhost)
+      DATABASE_URL: postgresql+asyncpg://ucm:ucm@db:5432/ucm
+      DATABASE_SYNC_URL: postgresql://ucm:ucm@db:5432/ucm
+      REDIS_URL: redis://redis:6379/0
+      QDRANT_URL: http://qdrant:6333
     ports: ["8000:8000"]
     depends_on:
       db:
@@ -43,6 +48,11 @@ services:
     build: .
     command: celery -A app.celery_app worker --loglevel=info --concurrency=2
     env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://ucm:ucm@db:5432/ucm
+      DATABASE_SYNC_URL: postgresql://ucm:ucm@db:5432/ucm
+      REDIS_URL: redis://redis:6379/0
+      QDRANT_URL: http://qdrant:6333
     depends_on:
       db:
         condition: service_healthy

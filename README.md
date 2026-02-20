@@ -50,6 +50,12 @@
 - 🔍 **Semantic search** — powered by Qdrant vector DB
 - 📝 **Background processing** — Celery + Redis for long transcript analysis
 
+## Prerequisites
+
+- **Docker & Docker Compose** — for backend + infra
+- **Node.js 18+ & Yarn** (or npm) — for frontend
+- **OpenRouter API key** — [get one](https://openrouter.ai/keys) for AI features
+
 ## Quick Start
 
 ### Backend (Recommended: Docker)
@@ -59,16 +65,19 @@ One command to rule them all:
 ```bash
 # Clone & enter repo
 git clone https://github.com/LatVAlY/use-case-manager.git
-cd usecase-manager
+cd use-case-manager
 
 # Copy example env files
 cp backend/.env.example backend/.env
 cp client/.env.example client/.env
 
-# ⚠️ Edit both .env files and add your OPENROUTER_API_KEY (and SECRET if needed)
+# ⚠️ Edit both .env files: add OPENROUTER_API_KEY and SECRET_KEY (backend/.env)
 
-# Start everything (backend + frontend + infra)
+# Start backend + infra (Postgres, Redis, Qdrant, API, Celery worker)
 docker compose up --build
+
+# In another terminal: start the frontend
+cd client && yarn install && yarn dev
 ```
 
 → API will be at http://localhost:8000  
@@ -82,7 +91,7 @@ cd backend
 
 # 1. Environment
 cp .env.example .env
-# Edit .env → add OPENROUTER_API_KEY and SECRET
+# Edit .env → add OPENROUTER_API_KEY and SECRET_KEY
 
 # 2. Infrastructure (in background)
 docker compose up -d db redis qdrant
@@ -105,16 +114,16 @@ export PROCESS=worker
 ### Frontend
 
 ```bash
-cd frontend
+cd client
 
 # 1. Environment
 cp .env.example .env
-# Edit .env → add necessary keys if needed
+# Edit .env if needed (NEXT_PUBLIC_API_BASE_URL defaults to http://localhost:8000)
 
-# 2. Start dev server
+# 2. Install & start dev server
+yarn install
 yarn dev
-# or
-npm run dev
+# or: npm install && npm run dev
 ```
 
 Open http://localhost:3000
