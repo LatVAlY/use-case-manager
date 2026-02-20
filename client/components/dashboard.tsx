@@ -3,11 +3,10 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   listIndustries,
-  createIndustry,
-  deleteIndustry,
   listCompanies,
   createCompany,
   deleteCompany,
+  deleteIndustry,
   type IndustryResponse,
   type CompanyResponse,
 } from "@/lib/api-client";
@@ -52,7 +51,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus,
   Trash2,
@@ -69,18 +67,13 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Industry form
-  const [industryOpen, setIndustryOpen] = useState(false);
-  const [indName, setIndName] = useState("");
-  const [indDesc, setIndDesc] = useState("");
-  const [creatingInd, setCreatingInd] = useState(false);
-
-  // Company form
   const [companyOpen, setCompanyOpen] = useState(false);
   const [compName, setCompName] = useState("");
   const [compDesc, setCompDesc] = useState("");
   const [compWebsite, setCompWebsite] = useState("");
-  const [compIndustryId, setCompIndustryId] = useState("");
+  const [compIndustryId, setCompIndustryId] = useState<string>("");
+  const [compIndustryName, setCompIndustryName] = useState("");
+  const [useNewIndustry, setUseNewIndustry] = useState(false);
   const [creatingComp, setCreatingComp] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -102,45 +95,31 @@ export function Dashboard() {
     fetchData();
   }, [fetchData]);
 
-  async function handleCreateIndustry(e: React.FormEvent) {
-    e.preventDefault();
-    setCreatingInd(true);
-    try {
-      await createIndustry({ name: indName, description: indDesc || undefined });
-      setIndName("");
-      setIndDesc("");
-      setIndustryOpen(false);
-      await fetchData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create industry");
-    } finally {
-      setCreatingInd(false);
-    }
-  }
-
-  async function handleDeleteIndustry(id: string) {
-    try {
-      await deleteIndustry(id);
-      await fetchData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete industry");
-    }
-  }
-
   async function handleCreateCompany(e: React.FormEvent) {
     e.preventDefault();
     setCreatingComp(true);
     try {
-      await createCompany({
+      const payload: Record<string, unknown> = {
         name: compName,
-        industry_id: compIndustryId,
         description: compDesc || undefined,
         website: compWebsite || undefined,
-      });
+      };
+      if (useNewIndustry && compIndustryName.trim()) {
+        payload.industry_name = compIndustryName.trim();
+      } else if (compIndustryId) {
+        payload.industry_id = compIndustryId;
+      } else {
+        setError("Select an industry or enter a new one");
+        setCreatingComp(false);
+        return;
+      }
+      await createCompany(payload as Parameters<typeof createCompany>[0]);
       setCompName("");
       setCompDesc("");
       setCompWebsite("");
       setCompIndustryId("");
+      setCompIndustryName("");
+      setUseNewIndustry(false);
       setCompanyOpen(false);
       await fetchData();
     } catch (err) {
@@ -153,9 +132,18 @@ export function Dashboard() {
   async function handleDeleteCompany(id: string) {
     try {
       await deleteCompany(id);
-      await fetchData();
+      setCompanies((prev) => prev.filter((c) => c.id !== id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete company");
+    }
+  }
+
+  async function handleDeleteIndustry(id: string) {
+    try {
+      await deleteIndustry(id);
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete industry");
     }
   }
 
@@ -187,117 +175,129 @@ export function Dashboard() {
         </div>
       )}
 
-      <Tabs defaultValue="companies" className="w-full">
-        <TabsList className="w-full justify-start bg-foreground/5">
-          <TabsTrigger value="companies" className="gap-2">
-            <Building2 className="h-4 w-4" />
-            Companies
-            <Badge variant="secondary" className="ml-1">
-              {companies.length}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger value="industries" className="gap-2">
-            <Factory className="h-4 w-4" />
-            Industries
-            <Badge variant="secondary" className="ml-1">
-              {industries.length}
-            </Badge>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Companies Tab */}
-        <TabsContent value="companies" className="mt-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight">Companies</h2>
-              <p className="text-sm text-muted-foreground">
-                Manage companies, upload transcripts, and extract use cases
-              </p>
-            </div>
-            <Dialog open={companyOpen} onOpenChange={setCompanyOpen}>
-              <DialogTrigger asChild>
-                <Button disabled={industries.length === 0}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Company
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="border-foreground/10">
-                <form onSubmit={handleCreateCompany}>
-                  <DialogHeader>
-                    <DialogTitle>Create Company</DialogTitle>
-                    <DialogDescription>
-                      Add a new company to start uploading transcripts.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="comp-name">Name</Label>
-                      <Input
-                        id="comp-name"
-                        placeholder="Company name"
-                        value={compName}
-                        onChange={(e) => setCompName(e.target.value)}
-                        required
-                        className="border-foreground/20"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="comp-industry">Industry</Label>
-                      <Select value={compIndustryId} onValueChange={setCompIndustryId} required>
-                        <SelectTrigger className="border-foreground/20">
-                          <SelectValue placeholder="Select industry" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {industries.map((ind) => (
-                            <SelectItem key={ind.id} value={ind.id}>
-                              {ind.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="comp-desc">Description (optional)</Label>
-                      <Textarea
-                        id="comp-desc"
-                        placeholder="Brief description"
-                        value={compDesc}
-                        onChange={(e) => setCompDesc(e.target.value)}
-                        className="border-foreground/20"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="comp-website">Website (optional)</Label>
-                      <Input
-                        id="comp-website"
-                        type="url"
-                        placeholder="https://example.com"
-                        value={compWebsite}
-                        onChange={(e) => setCompWebsite(e.target.value)}
-                        className="border-foreground/20"
-                      />
-                    </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Companies</h2>
+          <p className="text-sm text-muted-foreground">
+            Manage companies and industries. Create a company and select or create an industry in one go.
+          </p>
+        </div>
+        <Dialog open={companyOpen} onOpenChange={setCompanyOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              New Company
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="border-foreground/10">
+            <form onSubmit={handleCreateCompany}>
+              <DialogHeader>
+                <DialogTitle>Create Company</DialogTitle>
+                <DialogDescription>
+                  Add a new company. Select an existing industry or create a new one.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="comp-name">Company name</Label>
+                  <Input
+                    id="comp-name"
+                    placeholder="Company name"
+                    value={compName}
+                    onChange={(e) => setCompName(e.target.value)}
+                    required
+                    className="border-foreground/20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Industry</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={!useNewIndustry ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setUseNewIndustry(false)}
+                    >
+                      Select existing
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={useNewIndustry ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setUseNewIndustry(true)}
+                    >
+                      Create new
+                    </Button>
                   </div>
-                  <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setCompanyOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={creatingComp || !compIndustryId}>
-                      {creatingComp ? <Spinner className="mr-2" /> : null}
-                      Create
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
+                  {!useNewIndustry ? (
+                    <Select value={compIndustryId} onValueChange={setCompIndustryId} required={!useNewIndustry}>
+                      <SelectTrigger className="border-foreground/20">
+                        <SelectValue placeholder="Select industry" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {industries.map((ind) => (
+                          <SelectItem key={ind.id} value={ind.id}>
+                            {ind.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      placeholder="New industry name"
+                      value={compIndustryName}
+                      onChange={(e) => setCompIndustryName(e.target.value)}
+                      required={useNewIndustry}
+                      className="border-foreground/20"
+                    />
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="comp-desc">Description (optional)</Label>
+                  <Textarea
+                    id="comp-desc"
+                    placeholder="Brief description"
+                    value={compDesc}
+                    onChange={(e) => setCompDesc(e.target.value)}
+                    className="border-foreground/20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="comp-website">Website (optional)</Label>
+                  <Input
+                    id="comp-website"
+                    type="url"
+                    placeholder="https://example.com"
+                    value={compWebsite}
+                    onChange={(e) => setCompWebsite(e.target.value)}
+                    className="border-foreground/20"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setCompanyOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={
+                    creatingComp ||
+                    (!useNewIndustry && !compIndustryId) ||
+                    (useNewIndustry && !compIndustryName.trim())
+                  }
+                >
+                  {creatingComp ? <Spinner className="mr-2" /> : null}
+                  Create
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
 
-          {industries.length === 0 && (
-            <div className="rounded-md border border-foreground/20 bg-foreground/5 px-4 py-3 text-sm text-foreground">
-              Create an industry first before adding companies.
-            </div>
-          )}
-
+      <div className="grid gap-6 md:grid-cols-2">
+        <div>
+          <h3 className="mb-3 text-lg font-semibold">Companies</h3>
           {companies.length === 0 ? (
             <Card className="border-dashed border-foreground/10">
               <CardContent className="flex flex-col items-center justify-center py-16">
@@ -309,7 +309,7 @@ export function Dashboard() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-3">
               {companies.map((company) => (
                 <Card
                   key={company.id}
@@ -390,85 +390,22 @@ export function Dashboard() {
               ))}
             </div>
           )}
-        </TabsContent>
+        </div>
 
-        {/* Industries Tab */}
-        <TabsContent value="industries" className="mt-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight">Industries</h2>
-              <p className="text-sm text-muted-foreground">
-                Manage industry categories for your companies
-              </p>
-            </div>
-            <Dialog open={industryOpen} onOpenChange={setIndustryOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Industry
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="border-foreground/10">
-                <form onSubmit={handleCreateIndustry}>
-                  <DialogHeader>
-                    <DialogTitle>Create Industry</DialogTitle>
-                    <DialogDescription>
-                      Add a new industry category.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="ind-name">Name</Label>
-                      <Input
-                        id="ind-name"
-                        placeholder="Industry name"
-                        value={indName}
-                        onChange={(e) => setIndName(e.target.value)}
-                        required
-                        className="border-foreground/20"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="ind-desc">Description (optional)</Label>
-                      <Textarea
-                        id="ind-desc"
-                        placeholder="Brief description"
-                        value={indDesc}
-                        onChange={(e) => setIndDesc(e.target.value)}
-                        className="border-foreground/20"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setIndustryOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={creatingInd}>
-                      {creatingInd ? <Spinner className="mr-2" /> : null}
-                      Create
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-
+        <div>
+          <h3 className="mb-3 text-lg font-semibold">Industries</h3>
           {industries.length === 0 ? (
             <Card className="border-dashed border-foreground/10">
-              <CardContent className="flex flex-col items-center justify-center py-16">
+              <CardContent className="flex flex-col items-center justify-center py-12">
                 <Factory className="mb-4 h-12 w-12 text-muted-foreground/50" />
                 <h3 className="mb-1 text-lg font-medium">No industries yet</h3>
                 <p className="mb-4 text-sm text-muted-foreground">
-                  Create your first industry to categorize companies
+                  Create your first industry when adding a company
                 </p>
-                <Button onClick={() => setIndustryOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Industry
-                </Button>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-3">
               {industries.map((industry) => {
                 const compCount = companies.filter((c) => c.industry_id === industry.id).length;
                 return (
@@ -532,8 +469,8 @@ export function Dashboard() {
               })}
             </div>
           )}
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
 }

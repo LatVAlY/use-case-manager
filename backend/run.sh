@@ -7,7 +7,7 @@ if [ "$PROCESS" = "worker" ]; then
 elif [ "$PROCESS" = "server" ]; then
     echo "running migrations"
     alembic upgrade head
-    uvicorn main:app --reload --port 8000
+    uvicorn app.main:app --reload --port 8000
 else
     printf "Please specify the type of process to run: 'worker' or 'server'\n"
 fi

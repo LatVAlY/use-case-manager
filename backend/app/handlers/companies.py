@@ -1,14 +1,18 @@
+import logging
 from uuid import UUID
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_async_session
 from app.models import User
-from app.schemas import CompanyCreate, CompanyUpdate, CompanyResponse, UserResponse
+from app.schemas import CompanyCreate, CompanyUpdate, CompanyResponse, CompanyCreateWithIndustry, IndustryCreate, UserResponse
 from app.services import CompanyService
+from app.repository import IndustryRepository
 from app.utils.permissions import require_maintainer, require_admin
 from app.utils.pagination import PaginationMixin
+from app.tasks.company_tasks import cleanup_company_data
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/companies", tags=["companies"])
 
 
@@ -44,13 +48,34 @@ async def list_companies(
 
 @router.post("", response_model=CompanyResponse, status_code=status.HTTP_201_CREATED)
 async def create_company(
-    company_in: CompanyCreate,
+    company_in: CompanyCreateWithIndustry,
     db: AsyncSession = Depends(get_async_session),
     current_user: UserResponse = Depends(require_maintainer),
 ):
-    """Create a new company"""
+    """Create a new company. Use industry_id for existing industry, or industry_name to create/select."""
     service = CompanyService(db)
-    company = await service.create_company(company_in)
+    industry_repo = IndustryRepository(db)
+
+    industry_id: UUID | None = company_in.industry_id
+    if industry_id is None and company_in.industry_name:
+        existing = await industry_repo.get_by_name(company_in.industry_name)
+        if existing:
+            industry_id = existing.id
+        else:
+            new_ind = await industry_repo.create(
+                IndustryCreate(name=company_in.industry_name, description=company_in.industry_description)
+            )
+            industry_id = new_ind.id
+    if industry_id is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Provide industry_id or industry_name")
+
+    company_create = CompanyCreate(
+        name=company_in.name,
+        industry_id=industry_id,
+        description=company_in.description,
+        website=company_in.website,
+    )
+    company = await service.create_company(company_create)
     await service.commit()
     return CompanyResponse.model_validate(company)
 
@@ -90,9 +115,23 @@ async def delete_company(
     current_user: UserResponse = Depends(require_admin),
     db: AsyncSession = Depends(get_async_session),
 ):
-    """Delete a company"""
+    """Delete a company and all related data (use cases, transcripts, embeddings)."""
     service = CompanyService(db)
+    # Check existence first (get_company uses same session/repo)
+    company = await service.get_company(company_id)
+    if not company:
+        logger.warning(f"Delete company: not found | company_id={company_id}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Company not found: {company_id}",
+        )
     deleted = await service.delete_company(company_id)
     if not deleted:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
+        logger.error(f"Delete company: cascade failed | company_id={company_id}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete company",
+        )
     await service.commit()
+    # Trigger Celery task to clean Qdrant embeddings (DB records already deleted)
+    cleanup_company_data.delay(str(company_id))

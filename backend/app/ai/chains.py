@@ -1,8 +1,8 @@
 from typing import List, Optional
 
 from app.config import settings
+from app.clients import get_chat_llm
 from pydantic import BaseModel, Field
-from langchain_openai import ChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
 
@@ -32,22 +32,18 @@ Do NOT invent use cases not present in the text."""
 
 REDUCE_SYSTEM = """You are merging use cases extracted from different sections of the same transcript.
 Merge obvious duplicates (same underlying idea). Combine details from multiple mentions.
-Raise confidence_score if a use case was mentioned multiple times. Keep distinct ones separate."""
+Raise confidence_score if a use case was mentioned multiple times. Keep distinct ones separate.
+CRITICAL: Do NOT output any use case that is semantically similar to one already in the "already_extracted" list.
+Treat "already_extracted" as the canonical list of use cases already produced—do not duplicate them."""
 
 def create_extraction_chain(
-    model: str = "openai/gpt-4o-mini",
+    model: str | None = None,
     temperature: float = 0.3,
 ) -> any:  # returns Runnable
-    api_key = settings.OPENROUTER_API_KEY
-    if not api_key:
+    if not settings.OPENROUTER_API_KEY:
         raise ValueError("OPENROUTER_API_KEY environment variable not set")
 
-    llm = ChatOpenAI(
-        model=model,
-        openai_api_key=api_key,
-        openai_api_base="https://openrouter.ai/api/v1",
-        temperature=temperature,
-    )
+    llm = get_chat_llm(model=model, temperature=temperature)
 
     parser = PydanticOutputParser(pydantic_object=ExtractionResult)
 
@@ -67,19 +63,13 @@ def create_extraction_chain(
     return prompt | llm | parser
 
 def create_reduction_chain(
-    model: str = "openai/gpt-4o-mini",
+    model: str | None = None,
     temperature: float = 0.3,
 ) -> any:
-    api_key = settings.OPENROUTER_API_KEY
-    if not api_key:
+    if not settings.OPENROUTER_API_KEY:
         raise ValueError("OPENROUTER_API_KEY environment variable not set")
 
-    llm = ChatOpenAI(
-        model=model,
-        openai_api_key=api_key,
-        openai_api_base="https://openrouter.ai/api/v1",
-        temperature=temperature,
-    )
+    llm = get_chat_llm(model=model, temperature=temperature)
 
     parser = PydanticOutputParser(pydantic_object=ExtractionResult)
 
@@ -87,9 +77,10 @@ def create_reduction_chain(
         template=(
             "{system_prompt}\n\n"
             "{format_instructions}\n\n"
-            "Extracted use cases from different chunks (JSON list):\n{text}"
+            "ALREADY EXTRACTED (do not duplicate):\n{already_extracted}\n\n"
+            "New use cases from this batch (merge/deduplicate against above):\n{text}"
         ),
-        input_variables=["text"],
+        input_variables=["text", "already_extracted"],
         partial_variables={
             "system_prompt": REDUCE_SYSTEM,
             "format_instructions": parser.get_format_instructions(),

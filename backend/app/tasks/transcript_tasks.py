@@ -11,6 +11,7 @@ from app.config import settings
 from app.models import Transcript, UseCase, Company
 from app.models.enums import TranscriptStatus, UseCaseStatus
 from app.ai.embedder import QdrantEmbedder
+from app.ai.knowledge_base import KnowledgeBase
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,7 @@ def process_transcript(self, transcript_id: str):
     """
     db: Session = SyncSessionLocal()
     embedder = QdrantEmbedder(settings.QDRANT_URL)
+    kb = KnowledgeBase(settings.QDRANT_URL)
     task_id = self.request.id
 
     try:
@@ -64,6 +66,21 @@ def process_transcript(self, transcript_id: str):
         transcript.chunk_count = chunk_count
         db.commit()
         logger.info(f"Chunking completed | transcript_id={transcript_id} | chunks={chunk_count}")
+
+        # ── Step 1b: Upsert chunks to Qdrant knowledge base ─────────────────
+        # Delete existing chunks first (handles reprocess) then upsert
+        try:
+            kb.delete_transcript(transcript_id)
+            for idx, chunk in enumerate(chunks):
+                kb.upsert_transcript_chunk(
+                    transcript_id=transcript_id,
+                    company_id=str(transcript.company_id),
+                    chunk_index=idx,
+                    text=chunk,
+                )
+            logger.info(f"Knowledge base updated | transcript_id={transcript_id} | chunks={chunk_count}")
+        except Exception as e:
+            logger.warning(f"Knowledge base upsert failed (non-fatal) | error={str(e)}")
 
 
         extraction_chain = create_extraction_chain()
@@ -98,20 +115,36 @@ def process_transcript(self, transcript_id: str):
 
         logger.info(f"MAP phase completed | transcript_id={transcript_id} | raw_use_cases={len(all_use_cases)}")
 
-        # ── Step 3: REDUCE – deduplicate & merge ───────────────────────────
+        # ── Step 3: REDUCE – moving window deduplicate & merge ───────────────
         publish_progress(transcript_id, "reducing", {"raw_count": len(all_use_cases)})
         logger.info(f"Starting REDUCE phase | raw_count={len(all_use_cases)}")
 
-        if all_use_cases:
-            use_case_json = json.dumps(
-                [uc.dict() for uc in all_use_cases],
-                default=str
-            )
+        REDUCE_BATCH_SIZE = 15  # Process in batches to keep context manageable
+        reduction_chain = create_reduction_chain()
+        accumulated: list = []
+        already_extracted_str = ""
 
+        if all_use_cases:
             try:
-                reduction_chain = create_reduction_chain()
-                reduced_result = reduction_chain.invoke({"text": use_case_json})
-                final_use_cases = reduced_result.use_cases
+                for i in range(0, len(all_use_cases), REDUCE_BATCH_SIZE):
+                    batch = all_use_cases[i : i + REDUCE_BATCH_SIZE]
+                    batch_json = json.dumps([uc.dict() for uc in batch], default=str)
+                    reduced_result = reduction_chain.invoke({
+                        "text": batch_json,
+                        "already_extracted": already_extracted_str or "(none yet)",
+                    })
+                    new_ucs = reduced_result.use_cases
+                    accumulated.extend(new_ucs)
+                    already_extracted_str = json.dumps(
+                        [{"title": u.title, "description": u.description[:200]} for u in accumulated],
+                        default=str,
+                    )
+                    publish_progress(
+                        transcript_id,
+                        "reducing",
+                        {"batch": i // REDUCE_BATCH_SIZE + 1, "accumulated": len(accumulated)},
+                    )
+                final_use_cases = accumulated
                 logger.info(f"REDUCE completed | before={len(all_use_cases)} → after={len(final_use_cases)}")
             except Exception as e:
                 logger.exception(f"REDUCE failed – falling back to raw results | error={str(e)}")
@@ -142,10 +175,17 @@ def process_transcript(self, transcript_id: str):
                     created_by_id=transcript.uploaded_by_id,
                 )
                 db.add(new_uc)
-                db.flush()  # get ID if needed later
+                db.flush()
 
-                # TODO: actual embedding + Qdrant upsert
-                # embedder.upsert_use_case(new_uc.id, ...)
+                try:
+                    kb.upsert_use_case(
+                        use_case_id=str(new_uc.id),
+                        company_id=str(transcript.company_id),
+                        title=uc_data.title,
+                        description=uc_data.description,
+                    )
+                except Exception as emb_err:
+                    logger.warning(f"Use case embedding failed (non-fatal) | id={new_uc.id} | error={str(emb_err)}")
 
                 persisted_count += 1
 

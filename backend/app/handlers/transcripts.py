@@ -54,16 +54,22 @@ async def upload_transcript(
     current_user: UserResponse = Depends(require_maintainer),
     db: AsyncSession = Depends(get_async_session),
 ):
-    """Upload a transcript and trigger AI extraction"""
+    """Upload a transcript and trigger AI extraction. Supports .txt, .md, .doc, .docx, .pdf."""
     service = TranscriptService(db)
     
-    # Read file
     content = await file.read()
-    text = content.decode("utf-8", errors="ignore")
+    filename = file.filename or "transcript.txt"
+    ext = filename.lower().split(".")[-1] if "." in filename else ""
+
+    if ext == "pdf":
+        from app.ai.pdf_converter import pdf_to_markdown
+        text = pdf_to_markdown(content, filename)
+    else:
+        text = content.decode("utf-8", errors="ignore")
     
     # Create transcript
     transcript_in = TranscriptCreate(
-        filename=file.filename or "transcript.txt",
+        filename=filename,
         raw_text=text,
         company_id=company_id,
         uploaded_by_id=current_user.id,

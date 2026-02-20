@@ -121,14 +121,15 @@ export function KanbanBoard({
   }
 
   return (
-    <ScrollArea className="w-full">
-      <div className="flex gap-4 pb-4" style={{ minWidth: "fit-content" }}>
-        {grouped.map((col) => {
-          const isOver = overColumn === col.status && draggedId !== null;
-          return (
-            <div
-              key={col.status}
-              className={`flex w-64 shrink-0 flex-col rounded-lg border transition-colors ${
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <ScrollArea className="h-full w-full">
+        <div className="flex h-full min-h-full gap-4 pb-4" style={{ minWidth: "fit-content" }}>
+          {grouped.map((col) => {
+            const isOver = overColumn === col.status && draggedId !== null;
+            return (
+              <div
+                key={col.status}
+                className={`flex h-full min-h-0 w-64 shrink-0 flex-col rounded-lg border transition-colors ${
                 isOver
                   ? "border-foreground/40 bg-foreground/5"
                   : "border-foreground/10 bg-background"
@@ -138,8 +139,8 @@ export function KanbanBoard({
               onDragOver={handleColumnDragOver}
               onDrop={(e) => handleDrop(e, col.status)}
             >
-              {/* Column header */}
-              <div className="flex items-center justify-between border-b border-foreground/10 px-3 py-3">
+              {/* Column header — sticky when scrolling cards */}
+              <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-foreground/10 bg-background px-3 py-3">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-foreground">
                     {col.label}
@@ -153,8 +154,9 @@ export function KanbanBoard({
                 </Badge>
               </div>
 
-              {/* Cards */}
-              <div className="flex flex-1 flex-col gap-2 p-2" style={{ minHeight: 120 }}>
+              {/* Cards — scrollable */}
+              <ScrollArea className="flex-1 min-h-0">
+              <div className="flex flex-col gap-2 p-2" style={{ minHeight: 120 }}>
                 {col.items.map((uc) => {
                   const isDragging = draggedId === uc.id;
                   const isUpdating = updating === uc.id;
@@ -234,11 +236,13 @@ export function KanbanBoard({
                   </div>
                 )}
               </div>
+              </ScrollArea>
             </div>
           );
         })}
-      </div>
-      <ScrollBar orientation="horizontal" />
-    </ScrollArea>
+        </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+    </div>
   );
 }

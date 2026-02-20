@@ -104,6 +104,16 @@ export function CompanyDetail({ companyId }: CompanyDetailProps) {
     fetchData();
   }, [fetchData]);
 
+  // Poll for transcript status when any are processing
+  const hasProcessingTranscripts = transcripts.some(
+    (t) => t.status === "uploaded" || t.status === "processing"
+  );
+  useEffect(() => {
+    if (!hasProcessingTranscripts) return;
+    const interval = setInterval(() => fetchData(), 3000);
+    return () => clearInterval(interval);
+  }, [hasProcessingTranscripts, fetchData]);
+
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -191,8 +201,8 @@ export function CompanyDetail({ companyId }: CompanyDetailProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="flex shrink-0 items-center gap-4">
         <Button
           variant="ghost"
           size="sm"
@@ -204,7 +214,7 @@ export function CompanyDetail({ companyId }: CompanyDetailProps) {
         </Button>
       </div>
 
-      <div>
+      <div className="shrink-0">
         <h1 className="text-2xl font-bold tracking-tight">{company.name}</h1>
         {company.description && (
           <p className="mt-1 text-muted-foreground">{company.description}</p>
@@ -228,7 +238,7 @@ export function CompanyDetail({ companyId }: CompanyDetailProps) {
       </div>
 
       {error && (
-        <div className="rounded-md border border-foreground/20 bg-foreground/5 px-4 py-3 text-sm text-foreground">
+        <div className="shrink-0 rounded-md border border-foreground/20 bg-foreground/5 px-4 py-3 text-sm text-foreground">
           {error}
           <button onClick={() => setError("")} className="ml-2 underline">
             dismiss
@@ -236,8 +246,8 @@ export function CompanyDetail({ companyId }: CompanyDetailProps) {
         </div>
       )}
 
-      <Tabs defaultValue="transcripts" className="w-full">
-        <TabsList className="w-full justify-start bg-foreground/5">
+      <Tabs defaultValue="transcripts" className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <TabsList className="shrink-0 w-full justify-start bg-foreground/5">
           <TabsTrigger value="transcripts" className="gap-2">
             <FileText className="h-4 w-4" />
             Transcripts
@@ -309,6 +319,10 @@ export function CompanyDetail({ companyId }: CompanyDetailProps) {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      {(transcript.status === "uploaded" ||
+                        transcript.status === "processing") && (
+                        <Spinner className="h-4 w-4 text-foreground/60" />
+                      )}
                       <Badge className={`text-xs ${transcriptStatusBadge(transcript.status)}`}>
                         {statusLabel(transcript.status)}
                       </Badge>
@@ -369,7 +383,7 @@ export function CompanyDetail({ companyId }: CompanyDetailProps) {
         </TabsContent>
 
         {/* Use Cases — Kanban Board */}
-        <TabsContent value="use-cases" className="mt-6">
+        <TabsContent value="use-cases" className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden">
           <KanbanBoard
             useCases={useCases}
             onCardClick={handleCardClick}

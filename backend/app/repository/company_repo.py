@@ -1,7 +1,7 @@
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from app.models import Company
+from sqlalchemy import select, func, delete
+from app.models import Company, Transcript, UseCase, ChatMessage
 from app.schemas import CompanyCreate, CompanyUpdate
 from app.repository.base import BaseRepository
 
@@ -33,3 +33,15 @@ class CompanyRepository(BaseRepository[Company, CompanyCreate, CompanyUpdate]):
         result = await self.db.execute(stmt)
         items = result.scalars().all()
         return items, total
+
+    async def delete_company_cascade(self, company_id: UUID) -> bool:
+        """Delete company and all related data (use_cases, transcripts, chat_messages)."""
+        company = await self.get(company_id)
+        if not company:
+            return False
+        await self.db.execute(delete(UseCase).where(UseCase.company_id == company_id))
+        await self.db.execute(delete(Transcript).where(Transcript.company_id == company_id))
+        await self.db.execute(delete(ChatMessage).where(ChatMessage.company_id == company_id))
+        await self.db.delete(company)
+        await self.db.flush()
+        return True

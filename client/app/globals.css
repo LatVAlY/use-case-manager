@@ -123,3 +123,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Radix ScrollArea: fix for sticky positioning inside viewport */
+[data-radix-scroll-area-viewport] > div {
+  display: block !important;
+  min-height: auto !important;
+}

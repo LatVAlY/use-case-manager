@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { AppHeader } from "@/components/app-header";
+import { ChatSidebar } from "@/components/chat-sidebar";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function DashboardLayout({
@@ -13,6 +14,9 @@ export default function DashboardLayout({
 }) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const companyId = pathname?.match(/\/dashboard\/companies\/([^/]+)/)?.[1];
+  const [chatOpen, setChatOpen] = useState(true);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -31,9 +35,24 @@ export default function DashboardLayout({
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
+    <div className="flex h-screen flex-col overflow-hidden bg-background">
+      <AppHeader chatOpen={chatOpen} onChatOpenChange={setChatOpen} />
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        <main className="flex flex-1 min-w-0 min-h-0 flex-col overflow-hidden">
+          <div className="flex flex-1 min-h-0 overflow-hidden">
+            <div className="mx-auto w-full max-w-6xl flex-1 flex min-h-0 flex-col overflow-auto px-6 py-8">
+              {children}
+            </div>
+          </div>
+        </main>
+        <ChatSidebar
+          companyId={companyId}
+          open={chatOpen}
+          onOpenChange={setChatOpen}
+          inline
+          hideTrigger
+        />
+      </div>
     </div>
   );
 }

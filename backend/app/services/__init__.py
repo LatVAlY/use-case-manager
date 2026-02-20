@@ -3,6 +3,7 @@ from app.services.use_case_service import UseCaseService
 from app.services.transcript_service import TranscriptService
 from app.services.comment_service import CommentService
 from app.services.search_service import SearchService
+from app.services.chat_service import ChatService
 
 __all__ = [
     "CompanyService",
@@ -10,4 +11,5 @@ __all__ = [
     "TranscriptService",
     "CommentService",
     "SearchService",
+    "ChatService",
 ]

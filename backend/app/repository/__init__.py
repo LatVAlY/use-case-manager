@@ -5,6 +5,7 @@ from app.repository.company_repo import CompanyRepository
 from app.repository.transcript_repo import TranscriptRepository
 from app.repository.use_case_repo import UseCaseRepository
 from app.repository.comment_repo import CommentRepository
+from app.repository.chat_message_repo import ChatMessageRepository
 
 __all__ = [
     "BaseRepository",
@@ -14,4 +15,5 @@ __all__ = [
     "TranscriptRepository",
     "UseCaseRepository",
     "CommentRepository",
+    "ChatMessageRepository",
 ]

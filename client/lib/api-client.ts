@@ -51,7 +51,9 @@ export interface CompanyResponse {
 
 export interface CompanyCreate {
   name: string;
-  industry_id: string;
+  industry_id?: string | null;
+  industry_name?: string | null;
+  industry_description?: string | null;
   description?: string | null;
   website?: string | null;
 }

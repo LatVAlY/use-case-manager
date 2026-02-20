@@ -30,7 +30,7 @@ class CompanyService:
         return await self.repo.update(company_id, company_in)
 
     async def delete_company(self, company_id: UUID) -> bool:
-        return await self.repo.delete(company_id)
+        return await self.repo.delete_company_cascade(company_id)
 
     async def commit(self):
         await self.repo.commit()

@@ -7,6 +7,7 @@ from app.models.transcript import Transcript
 from app.models.use_case import UseCase
 from app.models.use_case_relation import UseCaseRelation
 from app.models.comment import Comment
+from app.models.chat_message import ChatMessage
 
 __all__ = [
     "Base",
@@ -22,4 +23,5 @@ __all__ = [
     "UseCase",
     "UseCaseRelation",
     "Comment",
+    "ChatMessage",
 ]
