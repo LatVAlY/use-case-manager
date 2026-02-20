@@ -1,5 +1,3 @@
-# app/ai/chains.py
-import os
 from typing import List, Optional
 
 from app.config import settings
@@ -49,12 +47,6 @@ def create_extraction_chain(
         openai_api_key=api_key,
         openai_api_base="https://openrouter.ai/api/v1",
         temperature=temperature,
-        # Optional: helps with OpenRouter leaderboard / rankings
-        # Uncomment if you have a public app
-        # openai_api_headers={
-        #     "HTTP-Referer": "https://your-company.com/usecase-manager",
-        #     "X-Title": "UseCase Manager MVP",
-        # },
     )
 
     parser = PydanticOutputParser(pydantic_object=ExtractionResult)
