@@ -28,6 +28,7 @@
 
 - [Table of Contents](#table-of-contents)
 - [Features](#features)
+- [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
   - [Backend (Recommended: Docker)](#backend-recommended-docker)
   - [Backend (Manual / Development)](#backend-manual--development)
